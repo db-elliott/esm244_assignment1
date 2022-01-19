@@ -1,0 +1,40 @@
+---
+title: "Task 2 - Model Selection"
+author: "Deanna Elliott"
+date: "1/19/2022"
+output: html_document
+---
+
+```{r setup, include=TRUE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+library(tidyverse)
+library(here)
+library(janitor)
+library(kableExtra)
+```
+
+## Overview
+
+
+## Read In Data
+
+```{r}
+
+```
+
+## Wrangling
+
+```{r}
+
+```
+
+## Comparison
+
+```{r}
+
+```
+
+## Data Citation
+CalCOFI data are available for use without restriction. Data downloaded from https://calcofi.org/ccdata.html.  Accessed 1/10/2022.
+
