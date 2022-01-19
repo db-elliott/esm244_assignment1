@@ -1,0 +1,85 @@
+---
+title: "Task 1 - Sierra Amphibians"
+author: "Deanna Elliott"
+date: "1/18/2022"
+output: html_document
+---
+
+```{r setup, include=TRUE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+library(tidyverse)
+library(janitor)
+library(here)
+library(lubridate)
+library(reprex)
+```
+
+# Overview
+
+
+
+# Read In Data
+
+```{r}
+
+amp <- readxl::read_xlsx(here("data", "sierra_amphibians.xlsx"))
+```
+
+# Wrangling
+
+```{r ramu stage wrangling}
+
+stage_count <- amp %>% 
+  filter(amphibian_species == "RAMU",
+         amphibian_life_stage %in% c("Tadpole", "SubAdult", "Adult")) %>% 
+  mutate(survey_date = ymd(survey_date),
+         year = year(survey_date)) %>% 
+  group_by(year, amphibian_life_stage) %>% 
+  summarize(count = n())
+```
+
+```{r ramu lake wrangling}
+
+lake_counts <- amp %>% 
+  filter(amphibian_species == "RAMU",
+         amphibian_life_stage %in% c("SubAdult", "Adult")) %>% 
+  mutate(survey_date = ymd(survey_date),
+         year = year(survey_date)) %>% 
+  group_by(year, lake_id) %>% 
+  summarize(count = n())
+
+```
+
+# Plots
+
+```{r plot counts by life stage}
+
+ggplot(data = stage_count,
+       aes(x = as.factor(year), y = count, fill = amphibian_life_stage)) +
+  geom_col(color = "black") +
+  scale_fill_manual(values = c("goldenrod1", "steelblue3", "olivedrab3")) +
+  labs(x = "Year", y = "Count", fill = "Life Stage") +
+  theme_minimal()
+```
+
+**Figure 1.** Caption
+
+```{r counts by lake}
+
+ggplot(data = lake_counts,
+       aes())
+```
+
+**Figure 2.** Caption
+
+# Combine Plots
+
+```{r combine}
+
+
+```
+
+**Figure 3.**
+
+# Data Citation
