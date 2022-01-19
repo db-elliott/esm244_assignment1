@@ -15,18 +15,18 @@ library(lubridate)
 library(patchwork)
 ```
 
-# Overview
+## Overview
+This report provides a summary of observation counts of mountain yellow-legged frogs across aquatic communities in the southern Sierra Nevada. All data presented is taken from the Sierra Lakes Inventory Project, which recorded amphibian abundance data from 1995-2007.
 
 
-
-# Read In Data
+## Read In Data
 
 ```{r}
 
 amp <- readxl::read_xlsx(here("data", "sierra_amphibians.xlsx"))
 ```
 
-# Wrangling
+## Wrangling
 
 ```{r ramu stage wrangling}
 
@@ -61,7 +61,7 @@ top_5 <- lake_counts %>%
     lake_id == "10226" ~ "Lake 10226"))
 ```
 
-# Plots
+## Plots
 
 ```{r plot counts by life stage}
 
@@ -75,7 +75,7 @@ p1 <- ggplot(data = stage_count,
 p1
 ```
 
-**Figure 1.** Caption
+**Figure 1.** Counts of mountain yellow-legged frogs (*Rana muscosa*) by life stage from 1995-2002 across over 8,000 aquatic communities in the southern Sierra Nevada. Green represents tadpole observations, blue represents subadults, and yellow represents adults.
 
 ```{r counts by lake}
 
@@ -92,15 +92,16 @@ p2 <- ggplot(data = top_5,
 p2
 ```
 
-**Figure 2.** Caption
+**Figure 2.** Counts of subadult and adult mountain yellow-legged frogs (*Rana muscosa*) in each of the five Sierra Nevada lakes with the greatest total number of observations across a seven year period (1995-2002).
 
-# Combine Plots
+## Combine Plots
 
 ```{r combine}
 
 p1 / p2
 ```
 
-**Figure 3.**
+**Figure 3.** Population counts of the endangered yellow-legged mountain frog (*Rana muscosa*). The top graph shows observations by life stage from 1995-2002 across over 8,000 aquatic communities in the southern Sierra Nevada. Green represents tadpole count, blue represents subadults, and yellow represents adults. The bottom graph shows observations in each of the five Sierra Nevada lakes with the greatest total number of observations of subadults and adults across the same time frame. 
 
-# Data Citation
+## Data Citation
+Knapp, R.A., C. Pavelka, E.E. Hegeman, and T.C. Smith. 2020. The Sierra Lakes Inventory Project: Non-Native fish and community composition of lakes and ponds in the Sierra Nevada, California ver 2. Environmental Data Initiative. https://doi.org/10.6073/pasta/d835832d7fd00d9e4466e44eea87fab3
