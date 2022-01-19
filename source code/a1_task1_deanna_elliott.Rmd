@@ -12,7 +12,7 @@ library(tidyverse)
 library(janitor)
 library(here)
 library(lubridate)
-library(reprex)
+library(patchwork)
 ```
 
 # Overview
@@ -46,29 +46,50 @@ lake_counts <- amp %>%
          amphibian_life_stage %in% c("SubAdult", "Adult")) %>% 
   mutate(survey_date = ymd(survey_date),
          year = year(survey_date)) %>% 
-  group_by(year, lake_id) %>% 
+  group_by(lake_id) %>% 
   summarize(count = n())
 
+
+top_5 <- lake_counts %>% 
+  arrange(desc(count)) %>% 
+  slice_head(n=5) %>% 
+   mutate(lake_id = case_when(
+    lake_id == "50183" ~ "Lake 50183",
+    lake_id == "70583" ~ "Lake 70583", 
+    lake_id == "50219" ~ "Lake 50219",
+    lake_id == "41322" ~ "Lake 41322",
+    lake_id == "10226" ~ "Lake 10226"))
 ```
 
 # Plots
 
 ```{r plot counts by life stage}
 
-ggplot(data = stage_count,
+p1 <- ggplot(data = stage_count,
        aes(x = as.factor(year), y = count, fill = amphibian_life_stage)) +
   geom_col(color = "black") +
   scale_fill_manual(values = c("goldenrod1", "steelblue3", "olivedrab3")) +
   labs(x = "Year", y = "Count", fill = "Life Stage") +
   theme_minimal()
+
+p1
 ```
 
 **Figure 1.** Caption
 
 ```{r counts by lake}
 
-ggplot(data = lake_counts,
-       aes())
+p2 <- ggplot(data = top_5,
+       aes(x = count, y = lake_id, fill = lake_id)) +
+  aes(y = reorder(lake_id, count)) +
+  geom_col(color = "black") +
+  scale_fill_manual(values = c("chocolate1", "orange", "gold1",
+                                "sandybrown", "tan1")) +
+  labs(x = "Count", y = "Location") +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+p2
 ```
 
 **Figure 2.** Caption
@@ -77,7 +98,7 @@ ggplot(data = lake_counts,
 
 ```{r combine}
 
-
+p1 / p2
 ```
 
 **Figure 3.**
