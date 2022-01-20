@@ -10,29 +10,165 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 
 library(tidyverse)
 library(here)
-library(janitor)
+library(AICcmodavg)
+library(modelsummary)
 library(kableExtra)
 ```
 
 ## Overview
-
+This report explores the relationship between oxygen saturation of seawater off California’s coast and several physical and chemical variables, such as temperature and salinity, and nutrient analysis. All data presented is taken from CalCOFI cruises within the California Current System.
 
 ## Read In Data
 
-```{r}
+```{r read in}
 
+sea_o2 <- read_csv(here("data", "calcofi_seawater_samples.csv"))
 ```
 
 ## Wrangling
 
-```{r}
+```{r create models}
 
+f1 <- o2sat ~ t_deg_c + salinity + po4u_m  
+mdl1 = lm(f1, data = sea_o2)
+
+f2 <- o2sat ~ t_deg_c + salinity + po4u_m + depth_m
+mdl2 = lm(f2, data = sea_o2)
 ```
 
-## Comparison
+### AICc
 
-```{r}
+```{r AICc}
 
+AICcmodavg::aictab(list(mdl1, mdl2))
+
+# dAICc = 2.42, significant
+# mdl2 is better (616.60 vs 619.03)
+
+# choose model 2 based on AICc
+```
+
+```{r comparison table}
+
+modelsummary(list(mdl1, mdl2), fmt = 2) %>% 
+  kable_classic()
+```
+
+
+### K-Fold Cross Validation
+
+Create fold
+
+```{r create fold}
+
+folds <- 10
+fold_vec <- rep(1:folds, length.out = nrow(sea_o2))
+table(fold_vec)
+
+set.seed(27)
+
+sea_o2_fold <- sea_o2 %>% 
+  mutate(group = sample(fold_vec, size = n(), replace = FALSE))
+
+# First fold
+
+test_df <- sea_o2_fold %>% 
+  filter(group == 1)
+
+train_df <- sea_o2_fold %>% 
+  filter(group != 1)   
+```
+
+Root mean square error formula
+
+```{r root mean square error}
+
+calc_rmse <- function(x, y){
+  rmse_result <- (x-y)^2 %>%  mean() %>% sqrt()
+  return(rmse_result)
+}
+```
+
+Data training
+
+```{r data training}
+
+training_mdl1 <- lm(f1, data = train_df)
+training_mdl2 <- lm(f2, data = train_df)
+```
+
+Predict test data
+
+```{r predict test data}
+
+
+predict_test <- test_df %>% 
+  mutate(model1 = predict(training_mdl1, test_df),
+         model2 = predict(training_mdl2, test_df))
+
+rmse_predict_test <- predict_test %>% 
+  summarize(rmse_mdl1 = calc_rmse(model1, o2sat),
+            rmse_mdl2 = calc_rmse(model2, o2sat))
+
+
+# rmse_mdl1   rmse_mdl2
+#  <dbl>       <dbl>
+# 3.933322	  4.038657	
+
+# drmse = 0.105, non-significant difference
+```
+
+Calculate all folds and average
+
+```{r calc and avg}
+
+rmse_df <- data_frame()
+
+for(i in 1:folds) {
+ kfold_test_df <- sea_o2_fold %>% 
+   filter(group == i)
+ kfold_train_df <- sea_o2_fold %>% 
+   filter(group != i)
+ 
+ kfold_mdl1 <- lm(f1, data = kfold_train_df)
+  kfold_mdl2 <- lm(f2, data = kfold_train_df)
+   
+   kfold_pred_df <- kfold_test_df %>% 
+     mutate(mdl1 = predict(kfold_mdl1, kfold_test_df),
+            mdl2 = predict(kfold_mdl2, .))
+  
+    kfold_rmse <- kfold_pred_df %>% 
+     summarize(rmse_mdl1 = calc_rmse(mdl1, o2sat),
+               rmse_mdl2 = calc_rmse(mdl2, o2sat))
+   
+   rmse_df <- bind_rows(rmse_df, kfold_rmse)
+
+
+}
+
+means <- rmse_df %>% 
+  summarize(mean_rmse_mdl1 = mean(rmse_mdl1),
+            mean_rmse_mdl2 = mean(rmse_mdl2))
+#######
+means %>% 
+  kbl(col.names = c("Model 1 Mean RMSE", "Model 2 Mean RMSE", 
+                    caption = "<b> Table 1.</b>")) %>% 
+  kable_classic()
+
+### FIGURE HOW TO MAKE A TABLE OR SHOW THESE IN IN-LINE CODE!!!!!!!
+```
+
+To determine the best model from k-fold cross validation, we compare the root-mean-square-error of each model and take the one with the lower number. Model 1 is not slightly lower than Model 2, so it is the better model.
+
+Despite the corrected AIC score telling us that Model 2 is better, we are going to use Model 1 as our final model. This is because I have more confidence in the robustness of the 10-fold cross validation with its multiple-iteration testing process than the AICc.
+
+
+Final model
+
+```{r final mdl}
+
+final_mdl = lm(f1, data = sea_o2)
+summary(final_mdl)
 ```
 
 ## Data Citation
