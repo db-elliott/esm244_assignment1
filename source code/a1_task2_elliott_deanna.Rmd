@@ -48,7 +48,9 @@ AICcmodavg::aictab(list(mdl1, mdl2))
 # choose model 2 based on AICc
 ```
 
-```{r comparison table}
+**Table 1.** A comparison of Model 1 and Model 2 of the exploration of parameters that affect oxygen saturation levels in the California Current System.
+
+```{r comparison}
 
 modelsummary(list(mdl1, mdl2), fmt = 2) %>% 
   kable_classic()
@@ -115,7 +117,7 @@ rmse_predict_test <- predict_test %>%
 #  <dbl>       <dbl>
 # 3.933322	  4.038657	
 
-# drmse = 0.105
+# d rmse = 0.105
 ```
 
 Calculate all folds and average
@@ -149,31 +151,40 @@ for(i in 1:folds) {
 means <- rmse_df %>% 
   summarize(mean_rmse_mdl1 = mean(rmse_mdl1),
             mean_rmse_mdl2 = mean(rmse_mdl2))
-#######
-# means %>% 
-  # kbl(col.names = c("Model 1 Mean RMSE", "Model 2 Mean RMSE", 
-    #                caption = "<b> Table 1.</b>")) %>% 
-  # kable_classic()
 
-### FIGURE HOW TO MAKE A TABLE OR SHOW THESE IN IN-LINE CODE!!!!!!!
+# mean_rmse_mdl1  mean_rmse_mdl2
+#    <dbl>           <dbl>
+#   4.883332	      4.859471	
+
+# d rmse = 0.023861
 ```
 
-To determine the best model from k-fold cross-validation, we compare the root-mean-square error of each model and take the one with the lower number. Model 1 is slightly lower than Model 2, so it is the better model.
+``` {r comparison table}
+tribble(
+  ~Test , ~mdl1, ~mdl2, ~delta,
+  "Mean RMSE", 4.88,  4.86, 0.02,
+  "AICc", 616.60, 619.03, 2.42) %>% 
+  kable(col.names = c("", "Model 1", "Model 2", "Delta"),
+        caption = "<b> Table 2. </b> A comparison of mean root-mean-square error and corrected AIC for Model 1 and Model 2 of the exploration of parameters that affect oxygen saturation levels in the California Current System. The final column shows the difference between the two models' scores.") %>% 
+  kable_classic()
 
-Despite the corrected AIC score telling us that Model 2 is better, we are going to use Model 1 as our final model. This is because I have more confidence in the robustness of the 10-fold cross-validation with its multiple-iteration testing process than the AICc.
+```
 
-.
+To determine the best model from k-fold cross-validation, we compare the root-mean-square error of each model and take the one with the lower number. Model 1 is slightly lower than Model 2, so--according to strict interpretation of this test--it is the better model.
 
-Final model
+The difference between both models' root-mean-square error is, however, so small as to be insignificant. Essentially, the k-fold cross-validation tells us the two models are equally good. Therefore, we will look to the corrected AIC score to break the tie, and use Model 2 as our final model, as it is significantly better than Model 1. 
+
+## Final Model
+
+**Table 3.** The final model of the exploration of four parameters that affect oxygen saturation levels in the California Current System.
 
 ```{r final mdl}
 
 final_mdl = lm(f1, data = sea_o2)
 
-modelsummary(final_mdl, fmt = 2) %>% 
+modelsummary(final_mdl, fmt = 2)  %>% 
   kable_classic()
 ```
-.
 
 `r equatiomatic::extract_eq(final_mdl, wrap = TRUE, use_coefs = TRUE)`
 
