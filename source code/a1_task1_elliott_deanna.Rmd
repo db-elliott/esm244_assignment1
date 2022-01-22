@@ -41,6 +41,7 @@ stage_count <- amp %>%
                list(count = sum))
 ```
 
+
 ```{r ramu lake wrangling}
 
 lake_counts <- amp %>% 
