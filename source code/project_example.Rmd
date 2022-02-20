@@ -1,0 +1,93 @@
+---
+title: "Sierra Amphibian Analysis"
+output: html_document
+  
+---
+
+```{r setup, include=TRUE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+
+library(tidyverse)
+library(janitor)
+library(here)
+library(lubridate)
+library(patchwork)
+```
+
+## Overview
+This report provides a summary of observation counts of mountain yellow-legged frogs across aquatic communities in the southern Sierra Nevada. All data presented is taken from the Sierra Lakes Inventory Project, which recorded amphibian abundance data from 1995-2007.
+
+## Wrangling
+```{r}
+
+amp <- readxl::read_xlsx(here("data", "sierra_amphibians.xlsx"))
+```
+
+```{r ramu stage wrangling}
+
+stage_count <- amp %>% 
+  filter(amphibian_species == "RAMU",
+         amphibian_life_stage != "EggMass") %>% 
+  mutate(survey_date = ymd(survey_date),
+         year = year(survey_date)) %>% 
+  group_by(year, amphibian_life_stage) %>% 
+    drop_na() %>% 
+  summarize_at(vars(amphibian_number),
+               list(count = sum))
+```
+
+
+```{r ramu lake wrangling}
+
+lake_counts <- amp %>% 
+  filter(amphibian_species == "RAMU",
+         amphibian_life_stage %in% c("SubAdult", "Adult")) %>% 
+  mutate(survey_date = ymd(survey_date),
+         year = year(survey_date)) %>% 
+  group_by(lake_id) %>% 
+  drop_na() %>% 
+  summarize_at(vars(amphibian_number),
+               list(count = sum))
+
+
+top_5 <- lake_counts %>% 
+  arrange(desc(count)) %>% 
+  slice_head(n=5) %>% 
+  mutate(lake_id = paste("Lake", lake_id, sep = " "))
+```
+
+## Visualization
+
+```{r plot counts by life stage}
+
+p1 <- ggplot(data = stage_count,
+       aes(x = as.factor(year), y = count, fill = amphibian_life_stage)) +
+  geom_col(color = "black") +
+  scale_fill_manual(values = c("goldenrod1", "steelblue3", "olivedrab3")) +
+  labs(x = "Year", y = "Count", fill = "Life Stage") +
+  theme_minimal()
+
+```
+
+```{r counts by lake}
+
+p2 <- ggplot(data = top_5,
+       aes(x = count, y = lake_id, fill = lake_id)) +
+  aes(y = reorder(lake_id, count)) +
+  geom_col(color = "black") +
+  scale_fill_manual(values = c("chocolate1", "orange", "gold1",
+                                "sandybrown", "tan1")) +
+  labs(x = "Count", y = "Location") +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+```{r combine, fig.height=8, fig.width=8}
+
+p1 / p2
+```
+
+**Figure 1. Population counts of the endangered yellow-legged mountain frog (*Rana muscosa*)**. The top graph shows observations by life stage from 1995-2002 across over 8,000 aquatic communities in the southern Sierra Nevada. Green represents tadpole count, blue represents subadults, and yellow represents adults. The bottom graph shows observations in each of the five Sierra Nevada lakes with the greatest total number of observations of subadults and adults across the same time frame. 
+
+## Data Citation
+Knapp, R.A., C. Pavelka, E.E. Hegeman, and T.C. Smith. 2020. The Sierra Lakes Inventory Project: Non-Native fish and community composition of lakes and ponds in the Sierra Nevada, California ver 2. Environmental Data Initiative. https://doi.org/10.6073/pasta/d835832d7fd00d9e4466e44eea87fab3
